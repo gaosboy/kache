@@ -6,16 +6,14 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#define KACHE_DEFAULT_QUEUE_NAME            @"kache_default_queue_name_QWEDFVHUIOPPLMUYTRDX:"
 #define KACHE_DEFAULT_POOL_NAME             @"kache_default_pool_name_LKJHGFDWQSFASRTYUIOP:"
-
-#import "Kache.h"
-
-#import "KQueue.h"
-#import "KPool.h"
-#import "KHolder.h"
+#define KACHE_DEFAULT_QUEUE_NAME            @"kache_default_queue_name_QWEDFVHUIOPPLMUYTRDX:"
 
 #import "KConfig.h"
+#import "KHolder.h"
+#import "KPool.h"
+#import "KQueue.h"
+#import "Kache.h"
 
 @interface Kache ()
 

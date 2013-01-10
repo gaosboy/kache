@@ -9,9 +9,9 @@
 #define KCH_OBJ_DATA        @"data"
 #define KCH_OBJ_LIFE        @"life"
 
+#import "KConfig.h"
 #import "KObject.h"
 #import "KUtil.h"
-#import "KConfig.h"
 
 @interface KObject ()
 

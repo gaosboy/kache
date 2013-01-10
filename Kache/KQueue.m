@@ -6,12 +6,11 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#import "KQueue.h"
-
-#import "KHolder.h"
-#import "KUtil.h"
 #import "KConfig.h"
+#import "KHolder.h"
 #import "KObject.h"
+#import "KQueue.h"
+#import "KUtil.h"
 
 @interface KQueue ()
 
