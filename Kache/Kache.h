@@ -13,12 +13,6 @@
 @class KHolder;
 
 @interface Kache : NSObject
-{
-    NSMutableDictionary         *queues;
-    NSMutableDictionary         *pools;
-    
-    KHolder                     *holder;
-}
 
 @property (strong, nonatomic)               NSString *filetoken;
 

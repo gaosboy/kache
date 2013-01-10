@@ -11,15 +11,9 @@
 @class KHolder;
 
 @interface KQueue : NSObject
-{
-    KHolder         *holder;
-    NSMutableArray  *queue;
-    
-    NSInteger       offset;
-}
 
-@property (assign, nonatomic) NSInteger         size;
 @property (assign, nonatomic) NSString          *name;
+@property (assign, nonatomic) NSInteger         size;
 
 - (KQueue *)initWithHolder:(KHolder *)holder;
 

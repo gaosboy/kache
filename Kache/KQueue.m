@@ -16,8 +16,8 @@
 @interface KQueue ()
 
 @property (strong, nonatomic)   KHolder               *holder;
-@property (strong, atomic)      NSMutableArray        *queue;
 @property (assign, nonatomic)   NSInteger             offset;
+@property (strong, atomic)      NSMutableArray        *queue;
 
 - (void)cleanExpiredObjects;
 
@@ -25,11 +25,11 @@
 
 @implementation KQueue
 
-@synthesize size                = _size;
-@synthesize name                = _name;
 @synthesize holder              = _holder;
-@synthesize queue               = _queue;
+@synthesize name                = _name;
 @synthesize offset              = _offset;
+@synthesize queue               = _queue;
+@synthesize size                = _size;
 
 #pragma mark - init
 

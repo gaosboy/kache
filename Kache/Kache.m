@@ -19,18 +19,18 @@
 
 @interface Kache ()
 
-@property (strong, nonatomic) NSMutableDictionary           *queues;
-@property (strong, nonatomic) NSMutableDictionary           *pools;
 @property (strong, nonatomic) KHolder                       *holder;
+@property (strong, nonatomic) NSMutableDictionary           *pools;
+@property (strong, nonatomic) NSMutableDictionary           *queues;
 
 @end
 
 @implementation Kache
 
-@synthesize queues      = _queues;
-@synthesize pools       = _pools;
-@synthesize holder      = _holder;
 @synthesize filetoken   = _filetoken;
+@synthesize holder      = _holder;
+@synthesize pools       = _pools;
+@synthesize queues      = _queues;
 
 #pragma mark static for default
 

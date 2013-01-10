@@ -25,10 +25,10 @@
 
 @implementation KPool
 
-@synthesize size                = _size;
-@synthesize name                = _name;
 @synthesize holder              = _holder;
+@synthesize name                = _name;
 @synthesize pool                = _pool;
+@synthesize size                = _size;
 
 #pragma mark - init
 
