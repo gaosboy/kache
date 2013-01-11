@@ -10,7 +10,7 @@
 
 @interface KObject : NSObject
 
-@property (strong, nonatomic) NSMutableDictionary       *object;
+@property (strong, nonatomic)   NSMutableDictionary       *object;
 
 - (KObject *)initWithData:(id)data andLifeDuration:(NSInteger)duration;
 - (KObject *)initWithDictionary:(NSMutableDictionary *)dict;

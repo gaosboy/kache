@@ -14,7 +14,7 @@
 
 @interface Kache : NSObject
 
-@property (strong, nonatomic)               NSString *filetoken;
+@property (strong, nonatomic)   NSString            *filetoken;
 
 - (id)initWithFiletoken:(NSString *)filetoken;
 

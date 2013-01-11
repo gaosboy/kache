@@ -17,9 +17,9 @@
 
 @interface Kache ()
 
-@property (strong, nonatomic) KHolder                       *holder;
-@property (strong, nonatomic) NSMutableDictionary           *pools;
-@property (strong, nonatomic) NSMutableDictionary           *queues;
+@property (strong, nonatomic)   KHolder                       *holder;
+@property (strong, nonatomic)   NSMutableDictionary           *pools;
+@property (strong, nonatomic)   NSMutableDictionary           *queues;
 
 @end
 

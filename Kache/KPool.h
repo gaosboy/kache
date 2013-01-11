@@ -12,8 +12,8 @@
 
 @interface KPool : NSObject
 
-@property (assign, nonatomic) NSString          *name;
-@property (assign, nonatomic) NSInteger         size;
+@property (assign, nonatomic)   NSString          *name;
+@property (assign, nonatomic)   NSInteger         size;
 
 - (KPool *)initWithHolder:(KHolder *)holder;
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;
