@@ -65,10 +65,13 @@
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
 	NSString *path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
-    [self.fileManager createDirectoryAtPath:path
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:nil];
+    BOOL isDirectory = NO;
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
+        [self.fileManager createDirectoryAtPath:path
+                                  withIntermediateDirectories:YES
+                                                   attributes:nil
+                                                        error:nil];
+    }
     NSMutableArray *copiedKeys = [self.keys mutableCopy];
     while (0 < [copiedKeys count]) {
         // 归档至阈值一半的数据

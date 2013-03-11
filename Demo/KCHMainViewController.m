@@ -52,15 +52,15 @@
     
     self.banner = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 10.0f, 320.0f, 20.0f)];
     self.banner.backgroundColor = [UIColor clearColor];
-    self.banner.textAlignment = UITextAlignmentCenter;
+    self.banner.textAlignment = NSTextAlignmentCenter;
     self.banner.font = [UIFont boldSystemFontOfSize:18];
     [self.view addSubview:self.banner];
     
     self.body = [[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 300.0f, 410.0f)];
     self.body.backgroundColor = [UIColor clearColor];
     self.body.numberOfLines = 0;
-    self.body.lineBreakMode = UILineBreakModeWordWrap;
-    self.body.textAlignment = UITextAlignmentLeft;
+    self.body.lineBreakMode = NSLineBreakByCharWrapping;
+    self.body.textAlignment = NSTextAlignmentLeft;
     self.body.text = @"";
     [self.body sizeToFit];
     self.body.frame = CGRectMake(0.0f, 0.0f, 300.0f, self.body.bounds.size.height);
