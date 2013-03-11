@@ -16,6 +16,7 @@
 {
     NSMutableDictionary         *objects;
     NSMutableArray              *keys;
+    NSUInteger                  size;
 }
 
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;

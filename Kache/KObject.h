@@ -10,14 +10,14 @@
 
 @interface KObject : NSObject
 
-@property (strong, nonatomic)   NSMutableDictionary       *object;
-
 - (KObject *)initWithData:(id)data andLifeDuration:(NSInteger)duration;
-- (KObject *)initWithDictionary:(NSMutableDictionary *)dict;
+- (KObject *)initWithData:(NSData *)data;
 
+- (NSData *)data;
 - (id)value;
 - (NSInteger)expiredTimestamp;
 - (void)updateLifeDuration:(NSInteger)duration;
 - (BOOL)expired;
+- (NSUInteger)size;
 
 @end

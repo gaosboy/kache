@@ -17,3 +17,6 @@
 
 // Default expired time, 10 Days.
 #define     KACHE_DEFAULT_LIFE_DURATION 864000
+
+// 把内存归档到磁盘的阈值，单位 byte
+#define ARCHIVING_THRESHOLD             50000
