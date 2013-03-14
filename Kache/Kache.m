@@ -33,11 +33,11 @@
 #pragma mark static for default
 
 + (Kache *)instance {
-    static Kache *obj = nil;
-    if (nil == obj) {
+    static dispatch_once_t once_token;
+    static Kache *obj= nil;
+    dispatch_once(&once_token, ^{
         obj = [[Kache alloc] init];
-    }
-    
+    });
     return obj;
 }
 
