@@ -19,10 +19,12 @@
 
 // 正在进行归档的状态位
 @property (assign, atomic)      BOOL                        archiving;
+@property (assign, atomic)      BOOL                        cleaning;
+@property (strong, nonatomic)   NSFileManager               *fileManager;
 @property (strong, atomic)      NSMutableArray              *keys;
 @property (assign, nonatomic)   NSUInteger                  size;
 @property (strong, nonatomic)   NSMutableDictionary         *objects;
-@property (strong, nonatomic)   NSFileManager               *fileManager;
+@property (strong, nonatomic)   NSString                    *path;
 
 // 把数据写到磁盘
 - (void)archiveData;
@@ -33,6 +35,9 @@
 
 @implementation KHolder
 
+@synthesize archiving   = _archiving;
+@synthesize cleaning    = _cleaning;
+
 @synthesize fileManager = _fileManager;
 // 缓存Key列表
 @synthesize keys        = _keys;
@@ -40,6 +45,8 @@
 @synthesize size        = _size;
 // 缓存内容
 @synthesize objects     = _objects;
+
+@synthesize path        = _path;
 
 #pragma mark - init
 
@@ -50,7 +57,11 @@
         self.objects = [[NSMutableDictionary alloc] init];
         self.keys = [[NSMutableArray alloc] init];
         self.size = 0.0f;
-        self.fileManager = [NSFileManager defaultManager];
+        
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+        NSString *libDirectory = [paths objectAtIndex:0];
+        self.path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
+        
         return self;
     }
 
@@ -59,61 +70,65 @@
 
 #pragma mark - private
 
+- (NSFileManager *)fileManager
+{
+    return [NSFileManager defaultManager];
+}
+
 - (void)archiveData
 {
     self.archiving = YES;
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-	NSString *libDirectory = [paths objectAtIndex:0];
-	NSString *path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
-    BOOL isDirectory = NO;
-    if (! [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
-        [self.fileManager createDirectoryAtPath:path
-                                  withIntermediateDirectories:YES
-                                                   attributes:nil
-                                                        error:nil];
-    }
-    NSMutableArray *copiedKeys = [self.keys mutableCopy];
-    while (0 < [copiedKeys count]) {
-        // 归档至阈值一半的数据
-        if ((ARCHIVING_THRESHOLD / 2) > self.size) {
-            break;
+        BOOL isDirectory = NO;
+        if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
+            [self.fileManager createDirectoryAtPath:self.self.path
+                        withIntermediateDirectories:YES
+                                         attributes:nil
+                                              error:nil];
         }
-        NSString *key = [copiedKeys lastObject];
-        NSString *filePath = [path stringByAppendingPathComponent:key];
-        
-        NSData *data = [self.objects objectForKey:key];
-        [self.fileManager createFileAtPath:filePath contents:data attributes:nil];
-        [self.objects removeObjectForKey:key];
-        self.size -= data.length;
-        [copiedKeys removeLastObject];
-    }
-    self.archiving = NO;
+        NSMutableArray *copiedKeys = [self.keys mutableCopy];
+        while (0 < [copiedKeys count]) {
+            // 归档至阈值一半的数据
+            if ((ARCHIVING_THRESHOLD / 2) > self.size) {
+                break;
+            }
+            NSString *key = [copiedKeys lastObject];
+            NSString *filePath = [self.path stringByAppendingPathComponent:key];
+            
+            NSData *data = [self.objects objectForKey:key];
+            [data writeToFile:filePath atomically:YES];
+            self.size -= data.length;
+            [copiedKeys removeLastObject];
+            [self.objects removeObjectForKey:key];
+        }
+        copiedKeys = nil;
+        self.archiving = NO;
 }
 
 - (void)cleanExpiredObjects
 {
-    if (self.keys && 0 < [self.keys count]) {
-        for (int i = 0; i < [self.keys count] - 1; i ++) {
-            NSString *tmpKey = [self.keys objectAtIndex:i];
-            KObject *leftObject = [self objectForKey:tmpKey];
-            if ([leftObject expiredTimestamp] < [KUtil nowTimestamp]) {
-                [self.keys removeObject:tmpKey];
-                if ([[self.objects allKeys] containsObject:tmpKey]) {
-                    [self.objects removeObjectForKey:tmpKey];
+    self.cleaning = YES;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (self.keys && 0 < [self.keys count]) {
+            for (int i = 0; i < [self.keys count] - 1; i ++) {
+                NSString *tmpKey = [self.keys objectAtIndex:i];
+                KObject *leftObject = [self objectForKey:tmpKey];
+                if ([leftObject expiredTimestamp] < [KUtil nowTimestamp]) {
+                    [self.keys removeObject:tmpKey];
+                    if ([[self.objects allKeys] containsObject:tmpKey]) {
+                        [self.objects removeObjectForKey:tmpKey];
+                    }
+                    else {
+                        NSString *filePath = [self.path stringByAppendingPathComponent:tmpKey];
+                        [self.fileManager removeItemAtPath:filePath error:nil];
+                    }
                 }
                 else {
-                    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-                    NSString *libDirectory = [paths objectAtIndex:0];
-                    NSString *path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
-                    NSString *filePath = [path stringByAppendingPathComponent:tmpKey];
-                    [self.fileManager removeItemAtPath:filePath error:nil];
+                    break;
                 }
             }
-            else {
-                break;
-            }
         }
-    }
+        self.cleaning = NO;
+    });
 }
 
 #pragma mark - public
@@ -126,13 +141,10 @@
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration
 {
     KObject *object = [[KObject alloc] initWithData:value andLifeDuration:duration];
-
-    if (self.archiving) {
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-        NSString *libDirectory = [paths objectAtIndex:0];
-        NSString *path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
-        NSString *filePath = [path stringByAppendingPathComponent:key];
-        [self.fileManager createFileAtPath:filePath contents:object.data attributes:nil];
+    
+    if (YES || self.archiving) {
+        NSString *filePath = [self.path stringByAppendingPathComponent:key];
+        [object.data writeToFile:filePath atomically:YES];
     }
     else {
         [self.objects setValue:object.data forKey:key];
@@ -140,13 +152,13 @@
     }
     
     KObject *suchObject = [self objectForKey:key];
-
+    
     // TODO sort the key by expired time.
     [self.keys removeObject:key];
     
-    if (0 < [self.keys count]) {
+    if (! self.cleaning && (0 < [self.keys count])) {
         [self cleanExpiredObjects];
-
+        
         for (int i = [self.keys count] - 1; i >= 0; i --) {
             NSString *tmpKey = [self.keys objectAtIndex:i];
             KObject *leftObject = [self objectForKey:tmpKey];
@@ -190,10 +202,7 @@
         return [[KObject alloc] initWithData:[self.objects objectForKey:key]];
     }
     else {
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-        NSString *libDirectory = [paths objectAtIndex:0];
-        NSString *path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
-        NSString *filePath = [path stringByAppendingPathComponent:key];
+        NSString *filePath = [self.path stringByAppendingPathComponent:key];
         if ([self.fileManager fileExistsAtPath:filePath isDirectory:NO]) {
             [self.objects setValue:[NSData dataWithContentsOfFile:filePath] forKey:key];
             [self.fileManager removeItemAtPath:filePath error:nil];

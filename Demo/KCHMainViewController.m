@@ -40,7 +40,6 @@
         self.kache      = [[Kache alloc] init];
         self.timmer     = 0;
         self.offset     = 0;
-
     }
     return self;
 }
