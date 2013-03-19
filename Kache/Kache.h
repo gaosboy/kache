@@ -44,7 +44,8 @@
 + (void)newQueueWithName:(NSString *)name size:(NSInteger)size;
 + (void)newPoolWithName:(NSString *)name size:(NSInteger)size;
 
-+ (void)saveToStorage;
-+ (void)loadFromStorage;
++ (void)save;
+// 静态load方法，每次启动会被自动调用
++ (void)load;
 
 @end

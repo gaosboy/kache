@@ -83,11 +83,11 @@
     return [[Kache instance] newPoolWithName:name size:size];
 }
 
-+ (void)saveToStorage {
++ (void)save {
     return [[Kache instance] save];
 }
 
-+ (void)loadFromStorage {
++ (void)load {
     return [[Kache instance] load];
 }
 
@@ -231,6 +231,7 @@
 }
 
 - (void)load {
+    NSLog(@"zouni");
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
 	

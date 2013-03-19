@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#define Kache_Objects_Disk_Path         @"Caches/Kache_objects"
-
 #import "KConfig.h"
 #import "KHolder.h"
 #import "KObject.h"
@@ -28,6 +26,7 @@
 
 // 把数据写到磁盘
 - (void)archiveData;
+- (void)archiveAllData;
 
 - (void)cleanExpiredObjects;
 
@@ -56,7 +55,7 @@
     if (self) {
         self.objects = [[NSMutableDictionary alloc] init];
         self.keys = [[NSMutableArray alloc] init];
-        self.size = 0.0f;
+        self.size = 0;
         
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
         NSString *libDirectory = [paths objectAtIndex:0];
@@ -89,7 +88,7 @@
         NSMutableArray *copiedKeys = [self.keys mutableCopy];
         while (0 < [copiedKeys count]) {
             // 归档至阈值一半的数据
-            if ((ARCHIVING_THRESHOLD / 2) > self.size) {
+            if ((ARCHIVING_THRESHOLD / 2) >= self.size) {
                 break;
             }
             NSString *key = [copiedKeys lastObject];
@@ -106,10 +105,38 @@
 //    });
 }
 
+- (void)archiveAllData
+{
+    self.archiving = YES;
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        BOOL isDirectory = NO;
+        if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
+            [self.fileManager createDirectoryAtPath:self.self.path
+                        withIntermediateDirectories:YES
+                                         attributes:nil
+                                              error:nil];
+        }
+        NSMutableArray *copiedKeys = [self.keys mutableCopy];
+        while (0 < [copiedKeys count]) {
+            NSString *key = [copiedKeys lastObject];
+            NSString *filePath = [self.path stringByAppendingPathComponent:key];
+            
+            NSData *data = [self.objects objectForKey:key];
+            [data writeToFile:filePath atomically:YES];
+            self.size -= data.length;
+            [copiedKeys removeLastObject];
+            [self.objects removeObjectForKey:key];
+        }
+        copiedKeys = nil;
+        self.archiving = NO;
+//    });
+    
+}
+
 - (void)cleanExpiredObjects
 {
     self.cleaning = YES;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         if (self.keys && 0 < [self.keys count]) {
             for (int i = 0; i < [self.keys count] - 1; i ++) {
                 NSString *tmpKey = [self.keys objectAtIndex:i];
@@ -123,7 +150,7 @@
             }
         }
         self.cleaning = NO;
-    });
+//    });
 }
 
 #pragma mark - public
@@ -217,8 +244,8 @@
 // Convert object to NSDictionary.
 - (NSDictionary *)serialize
 {
+    [self archiveAllData];
     return [NSDictionary dictionaryWithObjectsAndKeys:
-            self.objects, @"objects",
             self.keys, @"keys",
             [NSString stringWithFormat:@"%d", self.size], @"size",
             nil];
@@ -227,10 +254,8 @@
 // Convert NSDictionary to object.
 - (void)unserializeFrom:(NSDictionary *)dict
 {
-    if ([[dict allKeys] containsObject:@"objects"]
-        && [[dict allKeys] containsObject:@"keys"]
+    if ([[dict allKeys] containsObject:@"keys"]
         && [[dict allKeys] containsObject:@"meta"]) {
-        self.objects = [dict objectForKey:@"objects"];
         self.keys = [dict objectForKey:@"keys"];
         self.size = [[dict objectForKey:@"size"] intValue];
     }
