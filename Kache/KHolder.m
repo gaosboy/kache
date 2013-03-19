@@ -78,6 +78,7 @@
 - (void)archiveData
 {
     self.archiving = YES;
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         BOOL isDirectory = NO;
         if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
             [self.fileManager createDirectoryAtPath:self.self.path
@@ -102,6 +103,7 @@
         }
         copiedKeys = nil;
         self.archiving = NO;
+//    });
 }
 
 - (void)cleanExpiredObjects
@@ -113,14 +115,7 @@
                 NSString *tmpKey = [self.keys objectAtIndex:i];
                 KObject *leftObject = [self objectForKey:tmpKey];
                 if ([leftObject expiredTimestamp] < [KUtil nowTimestamp]) {
-                    [self.keys removeObject:tmpKey];
-                    if ([[self.objects allKeys] containsObject:tmpKey]) {
-                        [self.objects removeObjectForKey:tmpKey];
-                    }
-                    else {
-                        NSString *filePath = [self.path stringByAppendingPathComponent:tmpKey];
-                        [self.fileManager removeItemAtPath:filePath error:nil];
-                    }
+                    [self removeObjectForKey:tmpKey];
                 }
                 else {
                     break;
@@ -135,7 +130,13 @@
 
 - (void)removeObjectForKey:(NSString *)key {
     [self.keys removeObject:key];
-    [self.objects removeObjectForKey:key];
+    if ([[self.objects allKeys] containsObject:key]) {
+        [self.objects removeObjectForKey:key];
+    }
+    else {
+        NSString *filePath = [self.path stringByAppendingPathComponent:key];
+        [self.fileManager removeItemAtPath:filePath error:nil];
+    }
 }
 
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration
