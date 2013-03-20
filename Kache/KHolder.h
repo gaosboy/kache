@@ -6,8 +6,6 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#define Kache_Objects_Disk_Path         @"Caches/Kache_objects"
-
 #import <Foundation/Foundation.h>
 
 @class KQueue;
@@ -20,6 +18,8 @@
     NSMutableArray              *keys;
     NSUInteger                  size;
 }
+
+- (id)initWithToken:(NSString *)token;
 
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;
 - (id)valueForKey:(NSString *)key;

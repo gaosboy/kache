@@ -106,7 +106,7 @@
         self.queues = [[NSMutableDictionary alloc] init];
         self.pools = [[NSMutableDictionary alloc] init];
         
-        self.holder = [[KHolder alloc] init];
+        self.holder = [[KHolder alloc] initWithToken:aFiletoken];
         
         [self newPoolWithName:nil size:0];
         [self newQueueWithName:nil size:0];
@@ -222,7 +222,7 @@
 	NSString *libDirectory = [paths objectAtIndex:0];
 	NSString *path = @"Caches/KACHE_STORAGE_FILE_QERFCVBJKOL:";
 	if (self.filetoken) {
-		path = [path stringByAppendingString:self.filetoken];
+		path = [path stringByAppendingPathExtension:self.filetoken];
 	}
 	NSString *filePath = [libDirectory stringByAppendingPathComponent:path];
 	
@@ -231,13 +231,12 @@
 }
 
 - (void)load {
-    NSLog(@"zouni");
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
 	
 	NSString *path = @"Caches/KACHE_STORAGE_FILE_QERFCVBJKOL:";
 	if (self.filetoken) {
-		path = [path stringByAppendingString:self.filetoken];
+		path = [path stringByAppendingPathExtension:self.filetoken];
 	}
 	NSString *filePath = [libDirectory stringByAppendingPathComponent:path];
     

@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
+#define Kache_Objects_Disk_Path         @"Caches/Kache_objects"
+
 #import "KConfig.h"
 #import "KHolder.h"
 #import "KObject.h"
@@ -51,6 +53,16 @@
 
 - (id)init
 {
+    self = [self initWithToken:@"_KacheDefault"];
+    if (self) {
+        return self;
+    }
+
+    return nil;
+}
+
+- (id)initWithToken:(NSString *)token
+{
     self = [super init];
     if (self) {
         self.objects = [[NSMutableDictionary alloc] init];
@@ -59,7 +71,7 @@
         
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
         NSString *libDirectory = [paths objectAtIndex:0];
-        self.path = [libDirectory stringByAppendingPathComponent:Kache_Objects_Disk_Path];
+        self.path = [libDirectory stringByAppendingPathComponent:[Kache_Objects_Disk_Path stringByAppendingPathExtension:token]];
         
         return self;
     }
