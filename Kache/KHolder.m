@@ -182,7 +182,7 @@
 {
     KObject *object = [[KObject alloc] initWithData:value andLifeDuration:duration];
     
-    if (YES || self.archiving) {
+    if (self.archiving) {
         NSString *filePath = [self.path stringByAppendingPathComponent:key];
         [object.data writeToFile:filePath atomically:YES];
     }
@@ -190,8 +190,6 @@
         [self.objects setValue:object.data forKey:key];
         self.size += [object size];
     }
-    
-    KObject *suchObject = [self objectForKey:key];
     
     // TODO sort the key by expired time.
     [self.keys removeObject:key];
@@ -203,7 +201,7 @@
             NSString *tmpKey = [self.keys objectAtIndex:i];
             KObject *leftObject = [self objectForKey:tmpKey];
             // 过期时间越晚
-            if ([leftObject expiredTimestamp] <= [suchObject expiredTimestamp]) {
+            if ([leftObject expiredTimestamp] <= [object expiredTimestamp]) {
                 if (([self.keys count] - 1) == i) {
                     [self.keys addObject:key];
                 }
@@ -238,19 +236,18 @@
 
 - (KObject *)objectForKey:(NSString *)key
 {
-    if ([[self.objects allKeys] containsObject:key]) {
-        return [[KObject alloc] initWithData:[self.objects objectForKey:key]];
-    }
-    else {
+    if (! [[self.objects allKeys] containsObject:key]) {
         NSString *filePath = [self.path stringByAppendingPathComponent:key];
         if ([self.fileManager fileExistsAtPath:filePath isDirectory:NO]) {
             [self.objects setValue:[NSData dataWithContentsOfFile:filePath] forKey:key];
             [self.fileManager removeItemAtPath:filePath error:nil];
-            return [[KObject alloc] initWithData:[self.objects objectForKey:key]];
+        }
+        else {
+            return nil;
         }
     }
     
-    return nil;
+    return [[KObject alloc] initWithData:[self.objects objectForKey:key]];
 }
 
 // Convert object to NSDictionary.
