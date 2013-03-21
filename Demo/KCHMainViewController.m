@@ -37,7 +37,7 @@
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
 
-        self.kache      = [[Kache alloc] init];
+        self.kache      = [[Kache alloc] initWithFiletoken:@"demo"];
         self.timmer     = 0;
         self.offset     = 0;
     }
@@ -237,7 +237,7 @@
 {
     [self printLog:@"====== Begin Load Test. ======"];
     
-    Kache *tmpKache = [[Kache alloc] init];
+    Kache *tmpKache = [[Kache alloc] initWithFiletoken:@"demo"];
 
     [tmpKache load];
     [self printLog:@"New Kache instance load from disk."];

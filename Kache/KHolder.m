@@ -7,6 +7,8 @@
 //
 
 #define Kache_Objects_Disk_Path         @"Caches/Kache_objects"
+#define DATA_FREE                       0
+#define DATA_OPERATING                  1
 
 #import "KConfig.h"
 #import "KHolder.h"
@@ -25,6 +27,7 @@
 @property (assign, nonatomic)   NSUInteger                  size;
 @property (strong, nonatomic)   NSMutableDictionary         *objects;
 @property (strong, nonatomic)   NSString                    *path;
+@property (strong, atomic)      NSConditionLock             *lock;
 
 // 把数据写到磁盘
 - (void)archiveData;
@@ -68,6 +71,7 @@
         self.objects = [[NSMutableDictionary alloc] init];
         self.keys = [[NSMutableArray alloc] init];
         self.size = 0;
+        self.lock = [[NSConditionLock alloc] initWithCondition:DATA_OPERATING];
         
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
         NSString *libDirectory = [paths objectAtIndex:0];
@@ -89,7 +93,7 @@
 - (void)archiveData
 {
     self.archiving = YES;
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         BOOL isDirectory = NO;
         if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
             [self.fileManager createDirectoryAtPath:self.self.path
@@ -98,6 +102,7 @@
                                               error:nil];
         }
         NSMutableArray *copiedKeys = [self.keys mutableCopy];
+        [self.lock lockWhenCondition:DATA_FREE];
         while (0 < [copiedKeys count]) {
             // 归档至阈值一半的数据
             if ((ARCHIVING_THRESHOLD / 2) >= self.size) {
@@ -112,44 +117,43 @@
             [copiedKeys removeLastObject];
             [self.objects removeObjectForKey:key];
         }
+        [self.lock unlockWithCondition:DATA_FREE];
         copiedKeys = nil;
         self.archiving = NO;
-//    });
+    });
 }
 
 - (void)archiveAllData
 {
     self.archiving = YES;
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        BOOL isDirectory = NO;
-        if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
-            [self.fileManager createDirectoryAtPath:self.self.path
-                        withIntermediateDirectories:YES
-                                         attributes:nil
-                                              error:nil];
-        }
-        NSMutableArray *copiedKeys = [self.keys mutableCopy];
-        while (0 < [copiedKeys count]) {
-            NSString *key = [copiedKeys lastObject];
-            NSString *filePath = [self.path stringByAppendingPathComponent:key];
-            
-            NSData *data = [self.objects objectForKey:key];
-            [data writeToFile:filePath atomically:YES];
-            self.size -= data.length;
-            [copiedKeys removeLastObject];
-            [self.objects removeObjectForKey:key];
-        }
-        copiedKeys = nil;
-        self.archiving = NO;
-//    });
-    
+    BOOL isDirectory = NO;
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
+        [self.fileManager createDirectoryAtPath:self.self.path
+                    withIntermediateDirectories:YES
+                                     attributes:nil
+                                          error:nil];
+    }
+    NSMutableArray *copiedKeys = [self.keys mutableCopy];
+    while (0 < [copiedKeys count]) {
+        NSString *key = [copiedKeys lastObject];
+        NSString *filePath = [self.path stringByAppendingPathComponent:key];
+        
+        NSData *data = [self.objects objectForKey:key];
+        [data writeToFile:filePath atomically:YES];
+        self.size -= data.length;
+        [copiedKeys removeLastObject];
+        [self.objects removeObjectForKey:key];
+    }
+    copiedKeys = nil;
+    self.archiving = NO;
 }
 
 - (void)cleanExpiredObjects
 {
     self.cleaning = YES;
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         if (self.keys && 0 < [self.keys count]) {
+            [self.lock lock];
             for (int i = 0; i < [self.keys count] - 1; i ++) {
                 NSString *tmpKey = [self.keys objectAtIndex:i];
                 KObject *leftObject = [self objectForKey:tmpKey];
@@ -160,9 +164,10 @@
                     break;
                 }
             }
+            [self.lock unlockWithCondition:DATA_FREE];
         }
         self.cleaning = NO;
-//    });
+    });
 }
 
 #pragma mark - public
@@ -196,7 +201,7 @@
     
     if (! self.cleaning && (0 < [self.keys count])) {
         [self cleanExpiredObjects];
-        
+        [self.lock lockWhenCondition:DATA_FREE];
         for (int i = [self.keys count] - 1; i >= 0; i --) {
             NSString *tmpKey = [self.keys objectAtIndex:i];
             KObject *leftObject = [self objectForKey:tmpKey];
@@ -211,6 +216,7 @@
                 break;
             }
         }
+        [self.lock unlockWithCondition:DATA_FREE];
     }
     if (! [self.keys containsObject:key]) {
         [self.keys insertObject:key atIndex:0];

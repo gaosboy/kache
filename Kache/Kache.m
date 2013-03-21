@@ -241,22 +241,24 @@
 	NSString *filePath = [libDirectory stringByAppendingPathComponent:path];
     
 	NSData *d = [NSData dataWithContentsOfFile:filePath];
-	NSDictionary *kacheDict = [NSDictionary dictionaryWithDictionary:
-							   [NSKeyedUnarchiver unarchiveObjectWithData:d]];
-    
-	if (kacheDict && 0 < [kacheDict count]) {
-        [self.holder unserializeFrom:[kacheDict objectForKey:@"holder"]];
-        for (NSDictionary *queueDict in [kacheDict objectForKey:@"queues"]) {
-            KQueue *queue = [[KQueue alloc] initWithHolder:self.holder];
-            [queue unserializeFrom:queueDict];
-            [self.queues setValue:queue forKey:[queueDict objectForKey:@"name"]];
+    if (d && 0 < d.length) {
+        NSDictionary *kacheDict = [NSDictionary dictionaryWithDictionary:
+                                   [NSKeyedUnarchiver unarchiveObjectWithData:d]];
+        
+        if (kacheDict && 0 < [kacheDict count]) {
+            [self.holder unserializeFrom:[kacheDict objectForKey:@"holder"]];
+            for (NSDictionary *queueDict in [kacheDict objectForKey:@"queues"]) {
+                KQueue *queue = [[KQueue alloc] initWithHolder:self.holder];
+                [queue unserializeFrom:queueDict];
+                [self.queues setValue:queue forKey:[queueDict objectForKey:@"name"]];
+            }
+            for (NSDictionary *poolDict in [kacheDict objectForKey:@"pools"]) {
+                KPool *pool = [[KPool alloc] initWithHolder:self.holder];
+                [pool unserializeFrom:poolDict];
+                [self.pools setValue:pool forKey:[poolDict objectForKey:@"name"]];
+            }
         }
-        for (NSDictionary *poolDict in [kacheDict objectForKey:@"pools"]) {
-            KPool *pool = [[KPool alloc] initWithHolder:self.holder];
-            [pool unserializeFrom:poolDict];
-            [self.pools setValue:pool forKey:[poolDict objectForKey:@"name"]];
-        }
-	}
+    }
 }
 
 @end
