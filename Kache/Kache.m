@@ -49,6 +49,11 @@
     return [[Kache instance] setValue:value inPool:nil forKey:key expiredAfter:duration];
 }
 
++ (void)removeObjectForKey:(NSString *)key
+{
+    return [[Kache instance] removeObjectForKey:key];
+}
+
 + (void)pushValue:(id)value {
     return [[Kache instance] pushValue:value toQueue:nil];
 }
@@ -136,6 +141,15 @@
         KPool *pool = [self.pools objectForKey:name];
         [pool setValue:value forKey:key expiredAfter:duration];
     }
+}
+
+- (void)removeObjectForKey:(NSString *)key
+{
+    for (NSString *name in [self.pools allKeys]) {
+        KPool *pool = [self.pools valueForKey:name];
+        [pool removeObjectForKey:key];
+    }
+    [self.holder removeObjectForKey:key];
 }
 
 // Make sure the Queue exsists. Use newQueueWithName:size: to create a new Queue.

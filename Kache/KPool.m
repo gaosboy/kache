@@ -98,6 +98,12 @@
     }
 }
 
+- (void)removeObjectForKey:(NSString *)key
+{
+    [self.pool removeObject:key];
+    [self.holder removeObjectForKey:key];
+}
+
 - (NSDictionary *)serialize
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:

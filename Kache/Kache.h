@@ -8,8 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-@class KQueue;
-@class KPool;
 @class KHolder;
 
 @interface Kache : NSObject
@@ -24,6 +22,9 @@
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;
 - (void)setValue:(id)value inPool:(NSString *)name forKey:(NSString *)key expiredAfter:(NSInteger)duration;
 - (void)pushValue:(id)value toQueue:(NSString *)name;
+- (void)removeObjectForKey:(NSString *)key;
+
+
 - (id)popFromQueue:(NSString *)name;
 - (id)valueForKey:(NSString *)key;
 
@@ -33,6 +34,7 @@
 + (Kache *)instance;
 + (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;
 + (void)setValue:(id)value inDefaultPoolForKey:(NSString *)key expiredAfter:(NSInteger)duration;
++ (void)removeObjectForKey:(NSString *)key;
 + (void)pushValue:(id)value;
 + (id)popValue;
 + (id)valueForKey:(NSString *)key;

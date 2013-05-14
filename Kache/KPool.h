@@ -17,6 +17,7 @@
 
 - (KPool *)initWithHolder:(KHolder *)holder;
 - (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration;
+- (void)removeObjectForKey:(NSString *)key;
 
 - (NSDictionary *)serialize;
 - (void)unserializeFrom:(NSDictionary *)dict;

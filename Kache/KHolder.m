@@ -13,8 +13,6 @@
 #import "KConfig.h"
 #import "KHolder.h"
 #import "KObject.h"
-#import "KPool.h"
-#import "KQueue.h"
 #import "KUtil.h"
 
 @interface KHolder ()

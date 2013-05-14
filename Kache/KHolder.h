@@ -8,8 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-@class KQueue;
-@class KPool;
 @class KObject;
 
 @interface KHolder : NSObject
