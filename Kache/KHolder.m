@@ -245,14 +245,22 @@
     if (! [[self.objects allKeys] containsObject:key]) {
         NSString *filePath = [self.path stringByAppendingPathComponent:key];
         if ([self.fileManager fileExistsAtPath:filePath isDirectory:NO]) {
-            [self.objects setValue:[NSData dataWithContentsOfFile:filePath] forKey:key];
-            [self.fileManager removeItemAtPath:filePath error:nil];
+            // 超过阈值直接返回，不装入内存
+            if ((! self.archiving) && 0 < ARCHIVING_THRESHOLD && ARCHIVING_THRESHOLD < self.size) {
+                return [[KObject alloc] initWithData:[NSData dataWithContentsOfFile:filePath]];
+            }
+            else {
+                NSData *data = [NSData dataWithContentsOfFile:filePath];
+                [self.objects setValue:data forKey:key];
+                self.size += data.length;
+                data = nil;
+                [self.fileManager removeItemAtPath:filePath error:nil];
+            }
         }
         else {
             return nil;
         }
     }
-    
     return [[KObject alloc] initWithData:[self.objects objectForKey:key]];
 }
 
