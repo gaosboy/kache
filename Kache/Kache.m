@@ -37,11 +37,11 @@
 #if defined(__IPHONE_5_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_5_0
     static dispatch_once_t once_token;
     dispatch_once(&once_token, ^{
-        obj = [[Kache alloc] init];
+        obj = [[Kache alloc] initWithFiletoken:@""];
     });
 #elif defined(__IPHONE_4_3) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_4_3
 	if (nil == obj) {
-		obj = [[Kache alloc] init];
+        obj = [[Kache alloc] initWithFiletoken:@""];
 	}
     
 #else
@@ -109,7 +109,20 @@
 
 - (id)init
 {
-    return [self initWithFiletoken:@""];
+    self = [super init];
+    if (self) {
+        self.queues = [[NSMutableDictionary alloc] init];
+        self.pools = [[NSMutableDictionary alloc] init];
+        
+        self.holder = [[KHolder alloc] initWithToken:@""];
+        
+        [self newPoolWithName:nil size:0];
+        [self newQueueWithName:nil size:0];
+        self.filetoken = @"";
+
+        return self;
+    }
+    return nil;
 }
 
 // Spcify a FileToken, Kache will save the data into a different place.
