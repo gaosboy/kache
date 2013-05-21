@@ -33,12 +33,21 @@
 #pragma mark static for default
 
 + (Kache *)instance {
-    static dispatch_once_t once_token;
     static Kache *obj= nil;
+#if defined(__IPHONE_5_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_5_0
+    static dispatch_once_t once_token;
     dispatch_once(&once_token, ^{
         obj = [[Kache alloc] init];
     });
-    return obj;
+#elif defined(__IPHONE_4_3) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_4_3
+	if (nil == obj) {
+		obj = [[Kache alloc] init];
+	}
+    
+#else
+#error Your SDK is too old ! Need at least 4.3.
+#endif
+	return obj;
 }
 
 + (void)setValue:(id)value forKey:(NSString *)key expiredAfter:(NSInteger)duration {
