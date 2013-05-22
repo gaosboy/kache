@@ -20,6 +20,7 @@
 @property (strong, nonatomic)   KHolder                       *holder;
 @property (strong, nonatomic)   NSMutableDictionary           *pools;
 @property (strong, nonatomic)   NSMutableDictionary           *queues;
+@property (assign, nonatomic)   BOOL                          loaded;
 
 @end
 
@@ -47,6 +48,9 @@
 #else
 #error Your SDK is too old ! Need at least 4.3.
 #endif
+    if (! obj.loaded) {
+        [obj load];
+    }
 	return obj;
 }
 
@@ -102,7 +106,8 @@
 }
 
 + (void)load {
-    return [[Kache instance] load];
+// TODO load方法运行在iOS4.3上会挂
+//    return [[Kache instance] load];
 }
 
 #pragma mark - init
@@ -267,6 +272,7 @@
 }
 
 - (void)load {
+    self.loaded = YES;
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
 	
