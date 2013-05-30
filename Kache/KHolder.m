@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#define Kache_Objects_Disk_Path         @"Caches/Kache_objects"
+#define Kache_Objects_Disk_Path         @"Kache_objects"
 #define DATA_FREE                       0
 #define DATA_OPERATING                  1
 

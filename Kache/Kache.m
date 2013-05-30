@@ -259,9 +259,9 @@
                                poolArray,                   @"pools",
 							   nil];
 	
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
-	NSString *path = @"Caches/KACHE_STORAGE_FILE_QERFCVBJKOL:";
+	NSString *path = @"KACHE_STORAGE_FILE_QERFCVBJKOL:";
 	if (self.filetoken) {
 		path = [path stringByAppendingPathExtension:self.filetoken];
 	}
@@ -273,10 +273,10 @@
 
 - (void)load {
     self.loaded = YES;
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 	NSString *libDirectory = [paths objectAtIndex:0];
 	
-	NSString *path = @"Caches/KACHE_STORAGE_FILE_QERFCVBJKOL:";
+	NSString *path = @"KACHE_STORAGE_FILE_QERFCVBJKOL:";
 	if (self.filetoken) {
 		path = [path stringByAppendingPathExtension:self.filetoken];
 	}
