@@ -99,8 +99,8 @@
                                          attributes:nil
                                               error:nil];
         }
-        NSMutableArray *copiedKeys = [self.keys mutableCopy];
         [self.lock lockWhenCondition:DATA_FREE];
+        NSMutableArray *copiedKeys = [self.keys mutableCopy];
         while (0 < [copiedKeys count]) {
             // 归档至阈值一半的数据
             if ((ARCHIVING_THRESHOLD / 2) >= self.size) {
@@ -115,8 +115,8 @@
             [copiedKeys removeLastObject];
             [self.objects removeObjectForKey:key];
         }
-        [self.lock unlockWithCondition:DATA_FREE];
         copiedKeys = nil;
+        [self.lock unlockWithCondition:DATA_FREE];
         self.archiving = NO;
     });
 }
