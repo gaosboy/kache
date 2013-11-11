@@ -28,6 +28,7 @@
 @property (strong, atomic)      NSConditionLock             *lock;
 
 // 把数据写到磁盘
+- (void)doArchive;
 - (void)archiveData;
 - (void)archiveAllData;
 
@@ -74,7 +75,10 @@
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
         NSString *libDirectory = [paths objectAtIndex:0];
         self.path = [libDirectory stringByAppendingPathComponent:[Kache_Objects_Disk_Path stringByAppendingPathExtension:token]];
-        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            [self doArchive];
+        });
+
         return self;
     }
 
@@ -88,37 +92,49 @@
     return [NSFileManager defaultManager];
 }
 
+- (void)doArchive
+{
+    NSTimer *archivingTimer = [NSTimer timerWithTimeInterval:10.f target:self selector:@selector(archiveData) userInfo:nil repeats:YES];
+    NSRunLoop *archivingRunloop = [NSRunLoop currentRunLoop];
+    [archivingRunloop addTimer:archivingTimer forMode:NSDefaultRunLoopMode];
+    while (YES) {
+        [archivingRunloop runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:2.f]];
+    }
+}
+
 - (void)archiveData
 {
     self.archiving = YES;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        BOOL isDirectory = NO;
-        if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
-            [self.fileManager createDirectoryAtPath:self.self.path
-                        withIntermediateDirectories:YES
-                                         attributes:nil
-                                              error:nil];
-        }
-        [self.lock lockWhenCondition:DATA_FREE];
-        NSMutableArray *copiedKeys = [self.keys mutableCopy];
-        while (0 < [copiedKeys count]) {
-            // 归档至阈值一半的数据
-            if ((ARCHIVING_THRESHOLD / 2) >= self.size) {
-                break;
-            }
-            NSString *key = [copiedKeys lastObject];
-            NSString *filePath = [self.path stringByAppendingPathComponent:key];
-            
-            NSData *data = [self.objects objectForKey:key];
-            [data writeToFile:filePath atomically:YES];
-            self.size -= data.length;
-            [copiedKeys removeLastObject];
-            [self.objects removeObjectForKey:key];
-        }
-        copiedKeys = nil;
-        [self.lock unlockWithCondition:DATA_FREE];
-        self.archiving = NO;
-    });
+    NSLog(@"archiging...");
+       if (0 < ARCHIVING_THRESHOLD
+           && ARCHIVING_THRESHOLD < self.size) {
+           BOOL isDirectory = NO;
+           if (! [[NSFileManager defaultManager] fileExistsAtPath:self.path isDirectory:&isDirectory]) {
+               [self.fileManager createDirectoryAtPath:self.self.path
+                           withIntermediateDirectories:YES
+                                            attributes:nil
+                                                 error:nil];
+           }
+           [self.lock lockWhenCondition:DATA_FREE];
+           NSMutableArray *copiedKeys = [self.keys mutableCopy];
+           while (0 < [copiedKeys count]) {
+               // 归档至阈值一半的数据
+               if ((ARCHIVING_THRESHOLD / 2) >= self.size) {
+                   break;
+               }
+               NSString *key = [copiedKeys lastObject];
+               NSString *filePath = [self.path stringByAppendingPathComponent:key];
+               
+               NSData *data = [self.objects objectForKey:key];
+               [data writeToFile:filePath atomically:YES];
+               self.size -= data.length;
+               [copiedKeys removeLastObject];
+               [self.objects removeObjectForKey:key];
+           }
+           copiedKeys = nil;
+           [self.lock unlockWithCondition:DATA_FREE];
+       }
+    self.archiving = NO;
 }
 
 - (void)archiveAllData
