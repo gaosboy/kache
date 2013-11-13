@@ -32,6 +32,7 @@
 - (void)archiveData;
 - (void)archiveAllData;
 
+- (void)doClean;
 - (void)cleanExpiredObjects;
 
 @end
@@ -77,6 +78,9 @@
         self.path = [libDirectory stringByAppendingPathComponent:[Kache_Objects_Disk_Path stringByAppendingPathExtension:token]];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
             [self doArchive];
+        });
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+            [self doClean];
         });
 
         return self;
@@ -162,26 +166,35 @@
     self.archiving = NO;
 }
 
+- (void)doClean
+{
+    NSTimer *cleaningTimer = [NSTimer timerWithTimeInterval:30.f target:self selector:@selector(cleanExpiredObjects) userInfo:nil repeats:YES];
+    NSRunLoop *cleaningRunloop = [NSRunLoop currentRunLoop];
+    [cleaningRunloop addTimer:cleaningTimer forMode:NSDefaultRunLoopMode];
+    while (YES) {
+        [cleaningRunloop runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:2.f]];
+    }
+}
+
 - (void)cleanExpiredObjects
 {
+    NSLog(@"cleaning...");
     self.cleaning = YES;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        if (self.keys && 0 < [self.keys count]) {
-            [self.lock lock];
-            for (int i = 0; i < [self.keys count] - 1; i ++) {
-                NSString *tmpKey = [self.keys objectAtIndex:i];
-                KObject *leftObject = [self objectForKey:tmpKey];
-                if ([leftObject expiredTimestamp] < [KUtil nowTimestamp]) {
-                    [self removeObjectForKey:tmpKey];
-                }
-                else {
-                    break;
-                }
+    if (self.keys && 0 < [self.keys count]) {
+        [self.lock lock];
+        for (int i = 0; i < [self.keys count] - 1; i ++) {
+            NSString *tmpKey = [self.keys objectAtIndex:i];
+            KObject *leftObject = [self objectForKey:tmpKey];
+            if ([leftObject expiredTimestamp] < [KUtil nowTimestamp]) {
+                [self removeObjectForKey:tmpKey];
             }
-            [self.lock unlockWithCondition:DATA_FREE];
+            else {
+                break;
+            }
         }
-        self.cleaning = NO;
-    });
+        [self.lock unlockWithCondition:DATA_FREE];
+    }
+    self.cleaning = NO;
 }
 
 #pragma mark - public
@@ -213,25 +226,22 @@
     // TODO sort the key by expired time.
     [self.keys removeObject:key];
     
-    if (! self.cleaning && (0 < [self.keys count])) {
-        [self cleanExpiredObjects];
-        [self.lock lockWhenCondition:DATA_FREE];
-        for (int i = [self.keys count] - 1; i >= 0; i --) {
-            NSString *tmpKey = [self.keys objectAtIndex:i];
-            KObject *leftObject = [self objectForKey:tmpKey];
-            // 过期时间越晚
-            if ([leftObject expiredTimestamp] <= [object expiredTimestamp]) {
-                if (([self.keys count] - 1) == i) {
-                    [self.keys addObject:key];
-                }
-                else {
-                    [self.keys insertObject:key atIndex:i + 1];
-                }
-                break;
+    [self.lock lockWhenCondition:DATA_FREE];
+    for (int i = [self.keys count] - 1; i >= 0; i --) {
+        NSString *tmpKey = [self.keys objectAtIndex:i];
+        KObject *leftObject = [self objectForKey:tmpKey];
+        // 过期时间越晚
+        if ([leftObject expiredTimestamp] <= [object expiredTimestamp]) {
+            if (([self.keys count] - 1) == i) {
+                [self.keys addObject:key];
             }
+            else {
+                [self.keys insertObject:key atIndex:i + 1];
+            }
+            break;
         }
-        [self.lock unlockWithCondition:DATA_FREE];
     }
+    [self.lock unlockWithCondition:DATA_FREE];
     if (! [self.keys containsObject:key]) {
         [self.keys insertObject:key atIndex:0];
     }
